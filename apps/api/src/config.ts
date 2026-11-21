@@ -4,6 +4,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
   FAKE_STORE_BASE_URL: z.url().default("https://fakestoreapi.com"),
+  FAKE_STORE_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
   FEATURED_PRODUCT_IDS: z.string().default("1,2,3,4,5"),
   SMTP_HOST: z.string().default("localhost"),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
