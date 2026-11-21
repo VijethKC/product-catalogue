@@ -74,6 +74,7 @@ describe("GET /api/products", () => {
             "The product data source is unavailable",
           );
         },
+        getById: async () => null,
       },
     });
 
@@ -95,6 +96,7 @@ describe("GET /api/products", () => {
         getAll: async () => {
           throw new Error("secret database connection string");
         },
+        getById: async () => null,
       },
     });
 
@@ -107,5 +109,50 @@ describe("GET /api/products", () => {
     expect(JSON.stringify(response.body)).not.toContain("secret database");
 
     consoleError.mockRestore();
+  });
+});
+
+describe("GET /api/products/featured", () => {
+  it("returns the configured featured products in order", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const response = await request(appWithFixtures()).get(
+      "/api/products/featured",
+    );
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.products.map((item: { id: number }) => item.id),
+    ).toEqual([1, 2, 3, 4]);
+    expect(response.body.total).toBe(4);
+
+    warn.mockRestore();
+  });
+});
+
+describe("GET /api/products/:id", () => {
+  it("returns a product by id", async () => {
+    const response = await request(appWithFixtures()).get("/api/products/2");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ id: 2, title: expect.any(String) });
+  });
+
+  it("returns 404 for an unknown product", async () => {
+    const response = await request(appWithFixtures()).get("/api/products/99");
+
+    expect(response.status).toBe(404);
+    expect(response.body.error).toEqual({
+      code: "PRODUCT_NOT_FOUND",
+      message: "Product not found",
+    });
+  });
+
+  it("returns 400 for an invalid product id", async () => {
+    const response = await request(appWithFixtures()).get("/api/products/abc");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatchObject({ code: "VALIDATION_ERROR" });
+    expect(response.body.error.details).toHaveProperty("id");
   });
 });

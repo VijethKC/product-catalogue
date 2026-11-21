@@ -3,7 +3,7 @@ import type { ProductRepository } from "./productRepository";
 
 /**
  * Deterministic in-memory repository for tests and offline development.
- * Returns a copy so callers cannot mutate the fixture.
+ * Returns copies so callers cannot mutate the fixtures.
  */
 export function createFixtureAdapter(
   products: readonly Product[],
@@ -11,6 +11,10 @@ export function createFixtureAdapter(
   return {
     async getAll() {
       return [...products];
+    },
+
+    async getById(id) {
+      return products.find((product) => product.id === id) ?? null;
     },
   };
 }

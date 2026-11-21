@@ -22,23 +22,79 @@ export function createFakeStoreAdapter({
   timeoutMs = 5_000,
   fetchImpl = globalThis.fetch,
 }: FakeStoreAdapterOptions): ProductRepository {
-  const endpoint = `${baseUrl.replace(/\/+$/, "")}/products`;
+  const root = baseUrl.replace(/\/+$/, "");
+
+  async function request(path: string): Promise<Response> {
+    try {
+      return await fetchImpl(`${root}${path}`, {
+        headers: { accept: "application/json" },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch {
+      throw new HttpError(
+        502,
+        "UPSTREAM_UNAVAILABLE",
+        "The product data source is unavailable",
+      );
+    }
+  }
+
+  async function readBody(response: Response): Promise<string> {
+    try {
+      return await response.text();
+    } catch {
+      throw new HttpError(
+        502,
+        "UPSTREAM_INVALID_RESPONSE",
+        "The product data source returned invalid data",
+      );
+    }
+  }
+
+  function parseJson(body: string): unknown {
+    try {
+      return JSON.parse(body);
+    } catch {
+      throw new HttpError(
+        502,
+        "UPSTREAM_INVALID_RESPONSE",
+        "The product data source returned invalid data",
+      );
+    }
+  }
 
   return {
     async getAll() {
-      let response: Response;
+      const response = await request("/products");
 
-      try {
-        response = await fetchImpl(endpoint, {
-          headers: { accept: "application/json" },
-          signal: AbortSignal.timeout(timeoutMs),
-        });
-      } catch {
+      if (!response.ok) {
         throw new HttpError(
           502,
           "UPSTREAM_UNAVAILABLE",
-          "The product data source is unavailable",
+          "The product data source returned an error",
         );
+      }
+
+      const parsed = productListSchema.safeParse(
+        parseJson(await readBody(response)),
+      );
+
+      if (!parsed.success) {
+        throw new HttpError(
+          502,
+          "UPSTREAM_INVALID_RESPONSE",
+          "The product data source returned invalid data",
+        );
+      }
+
+      return parsed.data;
+    },
+
+    async getById(id) {
+      const response = await request(`/products/${id}`);
+
+      if (response.status === 404) {
+        return null;
       }
 
       if (!response.ok) {
@@ -49,19 +105,20 @@ export function createFakeStoreAdapter({
         );
       }
 
-      let payload: unknown;
+      const body = await readBody(response);
 
-      try {
-        payload = await response.json();
-      } catch {
-        throw new HttpError(
-          502,
-          "UPSTREAM_INVALID_RESPONSE",
-          "The product data source returned invalid data",
-        );
+      // Fake Store answers unknown IDs with 200 and an empty body.
+      if (body.trim() === "") {
+        return null;
       }
 
-      const parsed = productListSchema.safeParse(payload);
+      const payload = parseJson(body);
+
+      if (payload === null) {
+        return null;
+      }
+
+      const parsed = productSchema.safeParse(payload);
 
       if (!parsed.success) {
         throw new HttpError(

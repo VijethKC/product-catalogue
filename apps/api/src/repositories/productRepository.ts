@@ -7,4 +7,5 @@ import type { Product } from "@catalogue/shared";
  */
 export interface ProductRepository {
   getAll(): Promise<Product[]>;
+  getById(id: number): Promise<Product | null>;
 }

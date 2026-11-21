@@ -4,6 +4,7 @@ import { config } from "./config";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { createFakeStoreAdapter } from "./repositories/fakeStoreAdapter";
 import type { ProductRepository } from "./repositories/productRepository";
+import { createCategoriesRouter } from "./routes/categories";
 import { createProductsRouter } from "./routes/products";
 import { createProductService } from "./services/productService";
 
@@ -21,6 +22,11 @@ export function createApp(dependencies: AppDependencies = {}) {
       timeoutMs: config.FAKE_STORE_TIMEOUT_MS,
     });
 
+  const productService = createProductService(productRepository, {
+    featuredProductIds: config.featuredProductIds,
+    featuredPerCategory: config.FEATURED_PER_CATEGORY,
+  });
+
   app.disable("x-powered-by");
   app.use(helmet());
   app.use(express.json({ limit: "32kb" }));
@@ -29,7 +35,8 @@ export function createApp(dependencies: AppDependencies = {}) {
     res.json({ status: "ok" });
   });
 
-  app.use("/api/products", createProductsRouter(createProductService(productRepository)));
+  app.use("/api/products", createProductsRouter(productService));
+  app.use("/api/categories", createCategoriesRouter(productService));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
