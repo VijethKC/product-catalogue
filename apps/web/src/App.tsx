@@ -1,17 +1,21 @@
+import { Route, Routes } from "react-router-dom";
+import { Layout } from "./components/Layout";
+import { CategoryPage } from "./pages/CategoryPage";
+import { HomePage } from "./pages/HomePage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+import { ProductDetailPage } from "./pages/ProductDetailPage";
+import { SearchPage } from "./pages/SearchPage";
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-4">
-          <h1 className="text-xl font-semibold text-slate-900">Product Catalogue</h1>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-600">
-          Scaffold ready. The catalogue features land in the next step.
-        </p>
-      </main>
-    </div>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/categories/:category" element={<CategoryPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/products/:id" element={<ProductDetailPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Layout>
   );
 }

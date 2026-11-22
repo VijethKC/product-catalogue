@@ -21,8 +21,26 @@ export function errorHandler(
     return;
   }
 
+  // express.json() rejects malformed bodies before any route runs. That is a
+  // client mistake, so answer with the standard validation envelope.
+  if (isBodyParseError(err)) {
+    res.status(400).json({
+      error: { code: "VALIDATION_ERROR", message: "Invalid JSON body" },
+    });
+    return;
+  }
+
   console.error("Unhandled error:", err);
   res.status(500).json({
     error: { code: "INTERNAL_ERROR", message: "Something went wrong" },
   });
+}
+
+function isBodyParseError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "type" in error &&
+    (error as { type?: unknown }).type === "entity.parse.failed"
+  );
 }

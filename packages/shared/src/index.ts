@@ -56,6 +56,10 @@ export interface ProductListResponse {
   total: number;
 }
 
+export interface CategoriesResponse {
+  categories: string[];
+}
+
 export interface ApiErrorBody {
   error: {
     code: string;

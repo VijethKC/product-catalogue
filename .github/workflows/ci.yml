@@ -1,0 +1,55 @@
+name: CI
+
+# Runs on every pull request into main, and on main after merge.
+# Feature branches are covered through their pull request.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Read-only by default: nothing here needs to write to the repository.
+permissions:
+  contents: read
+
+# A new push to the same branch cancels the previous run, so a stale
+# result never blocks a fresh one.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Pinned to the minimum supported version (engines.node) so CI catches
+      # any accidental use of a newer runtime feature. 22.12 is NOT enough:
+      # jsdom 31 pulls in undici 8, which needs zlib.createZstdDecompress.
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22.22.2"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Separate steps so a failure names the check that broke, rather than
+      # stopping at the first one inside a combined script.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      # The API bundle (tsup) and the production web build (vite) both run here,
+      # so a broken build fails the pull request.
+      - name: Build
+        run: npm run build
