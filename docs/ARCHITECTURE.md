@@ -146,14 +146,18 @@ touch the network. Production builds the adapter from config.
 | File | Role |
 |---|---|
 | `index.html` | HTML shell, mounts `#root` |
-| `src/main.tsx` | React root + `StrictMode`, imports Tailwind CSS |
-| `src/App.tsx` | Placeholder shell — Step 4 replaces this with routes/pages |
+| `src/main.tsx` | React root, QueryClientProvider, BrowserRouter, Tailwind import |
+| `src/App.tsx` | Route table wrapped in `Layout` |
+| `src/api/client.ts` | Typed fetch wrapper, query strings, error-envelope parsing |
+| `src/hooks/useCatalogue.ts` | React Query hooks for products, categories, enquiry |
+| `src/components/*` | Layout, header/search/nav, cards/grid, rating, price, form, states |
+| `src/pages/*` | Home, Category, Search, Product detail, 404 |
+| `src/test/render.tsx` | Providers + MemoryRouter test helper |
 | `src/index.css` | Tailwind directives |
-| `src/test/setup.ts` | jest-dom matchers + RTL cleanup after each test |
 | `vite.config.ts` | React plugin, port 5173, `/api` proxy, Vitest jsdom config |
 
-The web app is intentionally still a shell. No router or QueryClient yet — those
-arrive with Step 4.
+The web app consumes only `/api`. It never calls Fake Store directly. The enquiry form is
+wired to `POST /api/enquiries`, which is implemented in Step 3.
 
 ---
 
@@ -221,10 +225,10 @@ mailpit      → captures enquiry emails
 
 ## 8. Where the remaining steps plug in
 
-- **Step 4 (next):** `App.tsx` becomes a router; add `src/api/client.ts`, React Query
-  hooks, pages and components. They consume the existing endpoints; the API does not
-  change.
-- **Step 3 (last):** adds `EmailProvider` + `SmtpEmailProvider`, `enquiryService`,
+- **Step 4 (done):** router, API client, React Query hooks, pages and components. They
+  consume the existing endpoints; the API did not change.
+- **Step 3 (next, deferred):** adds `EmailProvider` + `SmtpEmailProvider`, `enquiryService`,
   `routes/enquiries.ts`, and `POST /api/enquiries`. `createApp` gains an `emailProvider`
-  dependency the same way it has `productRepository`.
+  dependency the same way it has `productRepository`. This activates the enquiry form's
+  submit path.
 - **Step 5:** Dockerfiles + nginx + compose; nginx takes over the proxy role.

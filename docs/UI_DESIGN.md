@@ -92,6 +92,8 @@ Contrast: primary text on white and white text on `indigo-600` both meet WCAG AA
 - Category nav is a horizontal, scrollable row of links (not a dropdown).
 - Active category link: `text-indigo-600 font-medium` + underline offset.
 - Footer is minimal; no links required.
+- The layout is a flex column with a full-height minimum, so the footer stays at the bottom
+  of the viewport even when a page has little content.
 
 ---
 
@@ -153,6 +155,7 @@ Search results for "drive"
 
 - Header search input keeps the current query.
 - Submitting with fewer than 2 characters shows inline hint: `Enter at least 2 characters`.
+- Submitting an empty search returns to the homepage (`/`).
 - Empty result: `No products match "drive"` + suggestion to try another term + link home.
 - Missing/empty `q`: prompt state — `Search the catalogue` with the input focused.
 - Results use the same `ProductGrid`.

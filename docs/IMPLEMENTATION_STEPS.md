@@ -24,11 +24,11 @@
 | 1 | Fake Store adapter + product service + `GET /api/products` | ✅ Done |
 | 2 | Featured, categories, category split, product detail | ✅ Done |
 | 3 | Enquiry endpoint + email provider (Mailpit) | ⬜ Next |
-| 4 | Frontend pages, components, hooks, form | ⬜ Pending |
+| 4 | Frontend pages, components, hooks, form | ✅ Done (enquiry submit needs Step 3) |
 | 5 | Docker, nginx, compose, Mailpit wiring | ⬜ Pending |
 | 6 | Docs (`README`, `DECISIONS`, `AI_USAGE`), PR | ⬜ Pending |
 
-Progress: **3 of 7 steps** (0, 1 and 2).
+Progress: **4 of 7 steps** (0, 1, 2 and 4).
 
 ---
 
@@ -305,7 +305,7 @@ apps/api/tests/email.test.ts
 
 ---
 
-## Step 4 — Frontend ⬜
+## Step 4 — Frontend ✅
 
 ### Goal
 Deliver the five user-facing capabilities against our API only.
@@ -343,12 +343,39 @@ Deliver the five user-facing capabilities against our API only.
 - Enquiry success → thank-you; failure → error.
 - Error state + retry.
 
-> MSW is not installed yet; add it to `apps/web` devDependencies in this step.
+> Implemented without MSW: tests mock the typed `api` module, so no extra dependency
+> was added.
 
 ### Acceptance
 - All five capabilities work end to end in the browser against the real API.
 - No direct Fake Store calls from the browser.
 - Web tests green; typecheck/build green.
+
+### Implemented — results and decisions
+
+Delivered:
+- `src/api/client.ts` — typed fetch wrapper, query-string builder, error-envelope parsing,
+  `ApiError`.
+- `src/hooks/useCatalogue.ts` — React Query hooks for featured, list/search, categories,
+  category detail, product detail, and enquiry mutation.
+- Router + layout: sticky header, search form, category nav, skip link, footer.
+- Pages: Home, Category, Search, Product detail, 404.
+- Components: `ProductCard`, `ProductGrid`, `RatingStars`, `Price`, `EnquiryForm`,
+  `ProductGridSkeleton`, `ErrorState`, `EmptyState`.
+- Enquiry form validates against the shared `enquirySchema` (reads `issues` directly, so
+  the web app does not need its own Zod import).
+
+Verification: 10 web tests pass; typecheck and build pass. Production bundle is ~395 KB JS
+(~121 KB gzip) and ~13.6 KB CSS.
+
+Decisions:
+- **No MSW.** Tests `vi.mock` the typed `api` module. This avoids a new dependency and keeps
+  tests focused on user-visible behaviour. The fetch layer is exercised by live checks.
+- **Enquiry submit is already wired to `POST /api/enquiries`**, which does not exist until
+  Step 3. Until Step 3 lands, a live submit shows the form's failure state; the success path
+  is covered by a mocked test. This is the known ordering trade-off from deferring Step 3.
+- **USD formatting** via `Intl.NumberFormat`; no currency config was required.
+- **Minimum search length of 2** is enforced in the UI and by the API contract.
 
 ---
 
