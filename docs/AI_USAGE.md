@@ -40,7 +40,7 @@ spec (human)  →  plan doc  →  one step per session  →  tests  →  live ch
 4. **Live verification.** Passing tests were never treated as proof. Each step ended with
    real HTTP calls, and later a real browser and a real SMTP server.
 5. **Human review before commit.** Nothing was committed or pushed without explicit
-   approval. The reviewer read the diff, not just the summary.
+   approval. Every diff was read in full, not just the summary.
 
 ---
 
@@ -182,7 +182,7 @@ when writing the testing section of this document.
 
 **Fixed by:** recording the deviation and its reasoning in `docs/DECISIONS.md` (decision
 13) rather than rewriting the plan to match the outcome. A plan that is quietly edited to
-agree with the code teaches a reviewer nothing.
+agree with the code teaches a reader nothing.
 
 **Lesson:** deviations are fine; undocumented deviations are not. If the plan and the code
 disagree, one of them needs to say so out loud.

@@ -1,6 +1,6 @@
 # Product Catalogue
 
-A small, production-minded product catalogue built for the AI-Native Engineer code challenge.
+A small, production-minded product catalogue.
 
 React 19 + TypeScript client, Node.js + Express API, the Fake Store API behind a replaceable
 repository adapter, and enquiry email behind a replaceable provider.
@@ -260,7 +260,7 @@ Full reasoning is in [`docs/DECISIONS.md`](docs/DECISIONS.md). The short version
   performance change, deliberately deferred so it cannot mask correctness bugs.
 - **No rate limiting.** Needed before this is exposed publicly; see decisions.
 - **No auth, cart, payments, admin, database or cloud deploy.** Explicitly out of scope
-  for the challenge, listed here rather than half-built.
+  listed here rather than half-built.
 - **Mailpit captures mail locally.** Point `SMTP_*` at a real provider and nothing else
   changes.
 

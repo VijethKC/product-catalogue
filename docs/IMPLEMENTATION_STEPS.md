@@ -415,7 +415,7 @@ Decisions:
 ## Step 5 — Docker and local run ✅
 
 ### Goal
-A reviewer runs the whole stack with two commands.
+The whole stack starts with two commands.
 
 ### Work items
 - `apps/api/Dockerfile` — multi-stage build, non-root, healthcheck.
@@ -495,7 +495,7 @@ Decisions:
 - PR description with an acceptance-criteria → implementation table and screenshots.
 
 ### Acceptance
-- A reviewer can understand the architecture and run the app without reading source.
+- A developer can understand the architecture and run the app without reading source.
 - Every acceptance criterion maps to code and a test.
 - PR is open from `feat/product-catalogue` into `main`.
 

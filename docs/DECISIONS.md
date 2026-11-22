@@ -1,7 +1,7 @@
 # Decisions
 
 Every notable choice in this repository, why it was made, what was rejected, and what it
-costs. The goal is that a reviewer can disagree with a decision without having to
+costs. The goal is that a reader can disagree with a decision without having to
 reverse-engineer it from the code.
 
 ---
@@ -45,10 +45,10 @@ adding safety at this scale.
 **Decision.** The home page shows the products listed in `FEATURED_PRODUCT_IDS`
 (default `1,2,3,4,5`).
 
-**Why.** The challenge describes "the five products the entrepreneur has chosen as top
-rated". That is a curation decision, not a query. Keeping it in configuration means the
+**Why.** The five products are curated rather than computed, so this is a business
+decision, not a query. Keeping it in configuration means the
 business can change the selection without a deploy of new logic, and the behaviour is
-obvious to a reviewer.
+obvious to a reader.
 
 **Rejected.** Sorting by `rating.rate` and taking five. It would usually return the same
 products, but it silently changes whenever Fake Store's data changes, and it removes the
@@ -113,12 +113,12 @@ behaviour. The email is the record, and the inbox is where a sales team already 
 **Decision.** `SmtpEmailProvider` talks plain SMTP to whatever `SMTP_*` points at. Locally
 that is Mailpit in Docker; in production it is a provider's SMTP credentials.
 
-**Why.** A reviewer needs to see the email without an account, an API key, or a real inbox.
+**Why.** A developer needs to see the email without an account, an API key, or a real inbox.
 Mailpit captures everything and exposes a web UI, so the enquiry flow is verifiable in one
 command. Because the provider is an interface, nothing in the service or route mentions
 Mailpit.
 
-**Rejected.** A hosted transactional API for the demo (requires credentials, breaks the
+**Rejected.** A hosted transactional API for local use (requires credentials, breaks the
 "works from a clean clone" goal), or logging emails to the console (does not prove the
 message renders).
 
@@ -183,7 +183,7 @@ deployment shape, and port `4000` is still published for health checks and debug
 
 **Why.** Correctness first. A cache would hide slow paths and make the featured/category
 logic harder to reason about while it was still being built. Fake Store is fast enough for
-a demo, and the adapter is the only place a cache would go.
+at this scale, and the adapter is the only place a cache would go.
 
 **Rejected.** An in-memory TTL cache now. It is the obvious next step — one wrapper around
 `ProductRepository`, no changes above it — but it was deliberately kept out of the critical
@@ -199,7 +199,7 @@ disguised.
 **Decision.** The enquiry endpoint is unauthenticated and unthrottled. No honeypot field was
 added.
 
-**Why.** This is a local demo with no public exposure, and the plan allowed the honeypot
+**Why.** This is a local deployment with no public exposure, and the plan allowed the honeypot
 only "if time permits". It did not. Building a half-configured limiter would imply a
 protection that is not really there.
 
@@ -306,7 +306,7 @@ rest, or when a route pulls in a large dependency.
 **Decision.** No authentication, cart, checkout, payments, admin, database, i18n,
 multi-currency, or cloud deployment.
 
-**Why.** The challenge is about judgement and boundaries, not feature volume. Each of these
+**Why.** This project is about judgement and boundaries, not feature volume. Each of these
 is a project of its own, and a half-built version would be worse than an honest gap: it
 would consume review attention while proving nothing.
 

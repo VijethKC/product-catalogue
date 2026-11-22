@@ -113,15 +113,15 @@ multipart message, escapes every value in the HTML part, and strips CR/LF from t
 |---|---|---|
 | `package.json` | Workspace list + shared scripts | Single entry point; `--workspaces --if-present` runs each app's script |
 | `tsconfig.base.json` | Shared compiler rules | `strict`, `noUncheckedIndexedAccess`, `noEmit` — one standard for all packages |
-| `.env.example` | Documented config, no secrets | Reviewers copy to `.env`; secrets never committed |
+| `.env.example` | Documented config, no secrets | Copy it to `.env`; secrets never committed |
 | `.gitignore` | Ignores `node_modules`, `dist`, `.env` | Keeps build output and secrets out of git |
 | `AGENTS.md` | Agent working rules | Discipline for AI-assisted delivery |
-| `docs/PLAN.md` | Architecture and decisions | Reference for the challenge |
+| `docs/PLAN.md` | Architecture and decisions | Scope, contract, build order, risks |
 | `docs/IMPLEMENTATION_STEPS.md` | Step-by-step log | What was done and how to verify |
 | `docs/DECISIONS.md` | Decision records with alternatives and costs | Why the code looks like this |
 | `docs/AI_USAGE.md` | AI workflow, review process, real mistakes | How the work was delivered |
-| `docs/PULL_REQUEST.md` | PR description and AC mapping | Reviewer entry point |
-| `docker-compose.yml` | `mailpit`, `api`, `web` | One command for the reviewer path |
+| `docs/PULL_REQUEST.md` | PR description and AC mapping | Review summary |
+| `docker-compose.yml` | `mailpit`, `api`, `web` | One command to run the stack |
 | `.dockerignore` | Build-context exclusions | Small context, no secrets or build output |
 | `.github/workflows/ci.yml` | `verify` job | Typecheck, tests and builds on every PR |
 

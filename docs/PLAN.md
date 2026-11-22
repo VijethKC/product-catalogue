@@ -1,19 +1,17 @@
 # Product Catalogue — Complete Solution Plan
 
 > Status: plan only. No implementation files have been created from this document yet.
-> Source: reconciled from the approved challenge plan plus the decision history in the
-> "Plan for AI-native engineer challenge" session.
+> Source: reconciled from the approved plan plus the decision history recorded during planning.
 > Last updated: 2026-11-21
 
 ---
 
 ## 1. Objective
 
-Build a small but production-minded product catalogue PoC for the AI-Native Engineer code
-challenge, within a 2–3 hour timebox.
+Build a small, production-minded product catalogue.
 
-The assessment is about engineering judgement, architectural boundaries, explicit
-assumptions, and disciplined AI-assisted delivery — not about feature volume.
+The focus is on engineering judgement, architectural boundaries, and explicit
+assumptions.
 
 **Core rule:** the browser never calls Fake Store API directly. All product traffic goes
 through our backend.
@@ -54,7 +52,7 @@ These are listed as next steps in `README.md` / `DECISIONS.md`, not built.
 | Testing | Vitest, React Testing Library, Supertest, nock |
 | Local infra | Docker Compose: `web`, `api`, `mailpit` |
 
-No paid services and no accounts required for a reviewer.
+No paid services and no accounts required.
 
 ---
 
@@ -324,9 +322,9 @@ Each step is a separate reviewable commit with tests.
 
 ---
 
-## 12. Docker and reviewer path
+## 12. Docker and local run
 
-Target: reviewer is running in under 2 minutes.
+Target: the stack is running in under 2 minutes.
 
 ```bash
 cp .env.example .env
@@ -351,14 +349,14 @@ Compose services:
 
 ## 13. Decisions and trade-offs (for `DECISIONS.md`)
 
-1. **Curated featured IDs** instead of computed top-5 — matches the challenge wording.
+1. **Curated featured IDs** instead of computed top-5 — matches the requirement wording.
 2. **Top 3 per category** as the featured threshold — documented assumption.
 3. **No persistence** — enquiries are emailed; stateless by design.
 4. **`q` over `search`** — single shared contract.
 5. **Mailpit captures locally**, it does not deliver to a real inbox — real SMTP is a config swap.
 6. **In-memory TTL cache** is optional; added only if it does not delay the critical path.
 7. **No rate limiting initially**; honeypot field on the enquiry form; rate limiting if time permits.
-8. **Single origin via nginx** — avoids CORS in the reviewer path.
+8. **Single origin via nginx** — avoids CORS in the standard run.
 9. **Shared workspace package** kept — ~30 lines, real front/back boundary.
 10. **Explicit cuts** — auth, cart, payments, admin, DB, cloud deploy.
 
