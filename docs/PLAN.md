@@ -51,7 +51,7 @@ These are listed as next steps in `README.md` / `DECISIONS.md`, not built.
 | Validation | Zod (shared contract) |
 | Product data | Fake Store API behind a repository adapter |
 | Email | Nodemailer SMTP behind an email-provider interface (Mailpit locally) |
-| Testing | Vitest, React Testing Library, Supertest, nock, MSW |
+| Testing | Vitest, React Testing Library, Supertest, nock |
 | Local infra | Docker Compose: `web`, `api`, `mailpit` |
 
 No paid services and no accounts required for a reviewer.
@@ -290,7 +290,10 @@ Tests map directly to acceptance criteria.
 7. Adapter normalization, upstream failure → 502, timeout handling.
 8. Health and unknown-route envelope regression tests.
 
-### Web (Vitest + RTL + MSW)
+### Web (Vitest + RTL)
+
+> Implementation note: the typed API client is mocked with `vi.mock` instead of MSW. The
+> deviation and its reasoning are recorded in `docs/DECISIONS.md` (decision 13).
 
 1. Home renders exactly 5 featured cards.
 2. Category page renders top-rated and additional sections.
@@ -394,7 +397,6 @@ Compose services:
 | SMTP unavailable | Explicit `502` and logged failure; enquiry is not reported as sent |
 | Scope creep (rate limiting, caching, logging) | Treat as optional; ship the critical path first |
 | Node version mismatch (`engines >=22.12` vs README "Node 20+") | Align docs and engines in the docs step |
-| MSW not yet installed in web devDependencies | Add it with the frontend tests, no runtime impact |
 | Time overrun | Cut optional infra, not tests or docs |
 
 ---

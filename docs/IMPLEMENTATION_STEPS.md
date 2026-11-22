@@ -26,9 +26,9 @@
 | 3 | Enquiry endpoint + email provider (Mailpit) | ✅ Done |
 | 4 | Frontend pages, components, hooks, form | ✅ Done |
 | 5 | Docker, nginx, compose, Mailpit wiring | ✅ Done |
-| 6 | Docs (`README`, `DECISIONS`, `AI_USAGE`), PR | ⬜ Next |
+| 6 | Docs (`README`, `DECISIONS`, `AI_USAGE`), PR | ✅ Done (PR prepared, not opened) |
 
-Progress: **6 of 7 steps** (0, 1, 2, 3, 4 and 5).
+Progress: **7 of 7 steps** (0–6).
 
 ---
 
@@ -69,7 +69,6 @@ curl localhost:5173/api/health          # proxied, same response
 
 ### Notes
 - `dist/` folders are build output and gitignored.
-- Node `engines` says `>=22.12`; README still says 20+ — fix in Step 6.
 
 ---
 
@@ -481,7 +480,7 @@ Decisions:
 
 ---
 
-## Step 6 — Documentation and PR ⬜
+## Step 6 — Documentation and PR ✅
 
 ### Work items
 - `README.md`: overview, architecture diagram, quick start (Docker + dev), endpoints,
@@ -497,6 +496,36 @@ Decisions:
 - A reviewer can understand the architecture and run the app without reading source.
 - Every acceptance criterion maps to code and a test.
 - PR is open from `feat/product-catalogue` into `main`.
+
+### Implemented — results and decisions
+
+Delivered:
+- `README.md` — rewritten: capabilities, ASCII architecture diagram, Docker and local quick
+  starts, endpoint and error tables, structure, scripts, full configuration table, testing
+  summary, trade-offs, and a docs index.
+- `docs/DECISIONS.md` — 18 decisions, each with context, the alternative rejected, and the
+  cost accepted. Covers the seams, curated featured ids, the top-3 rule, `q`, statelessness,
+  Mailpit, failure-never-success, escaping, single-origin proxying, deferred caching, the
+  missing rate limiting, the MSW deviation, Node 22.12, the Docker build shape, compose
+  interpolation, and the deliberate cuts.
+- `docs/AI_USAGE.md` — tools, prompt strategy, repository guardrails, the human review
+  checklist, five real defects with how each was caught, and an honest limits section.
+- `docs/PULL_REQUEST.md` — paste-ready PR body with the acceptance-criteria → implementation
+  → test table, verification output, assumptions, and out-of-scope list.
+- Node version mismatch fixed: the README now states 22.12+, matching `engines` and the
+  container image.
+
+Decisions:
+- **The PR body is a file, not an open PR.** Pushing and opening the PR need explicit
+  approval, and `gh` is not installed here. `docs/PULL_REQUEST.md` is written to be pasted
+  into GitHub unchanged.
+- **No screenshots were committed.** The browser capture tool needs a visible desktop
+  window, so the PR document lists the four captures to take instead of shipping stale or
+  broken images.
+- **The plan was not rewritten to match the code.** The MSW → `vi.mock` deviation is
+  recorded in `DECISIONS.md`; editing the plan after the fact would hide the reasoning.
+- **Step 6 is marked done but the PR is not open.** The acceptance bullet is left as
+  written so the remaining action is visible rather than quietly satisfied.
 
 ---
 
@@ -524,7 +553,7 @@ Decisions:
 | `FAKE_STORE_BASE_URL` | https://fakestoreapi.com | Adapter |
 | `FAKE_STORE_TIMEOUT_MS` | 5000 | Adapter |
 | `FEATURED_PRODUCT_IDS` | 1,2,3,4,5 | Featured endpoint |
-| `FEATURED_PER_CATEGORY` | 3 (to add) | Category split |
+| `FEATURED_PER_CATEGORY` | 3 | Category split |
 | `SMTP_HOST` / `SMTP_PORT` | localhost / 1025 | Email |
 | `SMTP_USER` / `SMTP_PASS` | empty | Email |
 | `EMAIL_FROM` / `EMAIL_TO` | local addresses | Email |

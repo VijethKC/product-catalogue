@@ -118,6 +118,9 @@ multipart message, escapes every value in the HTML part, and strips CR/LF from t
 | `AGENTS.md` | Agent working rules | Discipline for AI-assisted delivery |
 | `docs/PLAN.md` | Architecture and decisions | Reference for the challenge |
 | `docs/IMPLEMENTATION_STEPS.md` | Step-by-step log | What was done and how to verify |
+| `docs/DECISIONS.md` | Decision records with alternatives and costs | Why the code looks like this |
+| `docs/AI_USAGE.md` | AI workflow, review process, real mistakes | How the work was delivered |
+| `docs/PULL_REQUEST.md` | PR description and AC mapping | Reviewer entry point |
 | `docker-compose.yml` | `mailpit`, `api`, `web` | One command for the reviewer path |
 | `.dockerignore` | Build-context exclusions | Small context, no secrets or build output |
 
@@ -263,4 +266,5 @@ builds the SPA and copies `dist` into nginx.
   production builds SMTP from config. This activated the enquiry form's submit path.
 - **Step 5 (done):** Dockerfiles + nginx + compose + Mailpit. nginx takes over the proxy
   role on port 8080, and Mailpit captures enquiry emails locally.
-- **Step 6 (next):** `README`, `DECISIONS`, `AI_USAGE`, and the pull request.
+- **Step 6 (done):** `README`, `DECISIONS`, `AI_USAGE`, and a paste-ready PR description in
+  `docs/PULL_REQUEST.md`.
