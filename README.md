@@ -232,6 +232,25 @@ them focused on UI behaviour.
 
 ---
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request into `main`, on `main` after merge,
+and on demand. One job, three checks:
+
+| Step | Command |
+|---|---|
+| Typecheck | `npm run typecheck` |
+| Test | `npm run test` |
+| Build | `npm run build` |
+
+It installs with `npm ci` on Node 22.12 — the minimum supported version — with the npm
+cache enabled. Separate steps mean a failure names the check that broke.
+
+The job is deterministic: no network calls to Fake Store, no secrets, no Docker build. The
+Compose path is verified locally with the commands in the quick start above.
+
+---
+
 ## Trade-offs and next steps
 
 Full reasoning is in [`docs/DECISIONS.md`](docs/DECISIONS.md). The short version:

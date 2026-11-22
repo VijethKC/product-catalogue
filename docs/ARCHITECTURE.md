@@ -123,6 +123,7 @@ multipart message, escapes every value in the HTML part, and strips CR/LF from t
 | `docs/PULL_REQUEST.md` | PR description and AC mapping | Reviewer entry point |
 | `docker-compose.yml` | `mailpit`, `api`, `web` | One command for the reviewer path |
 | `.dockerignore` | Build-context exclusions | Small context, no secrets or build output |
+| `.github/workflows/ci.yml` | `verify` job | Typecheck, tests and builds on every PR |
 
 ### `packages/shared`
 
@@ -268,3 +269,6 @@ builds the SPA and copies `dist` into nginx.
   role on port 8080, and Mailpit captures enquiry emails locally.
 - **Step 6 (done):** `README`, `DECISIONS`, `AI_USAGE`, and a paste-ready PR description in
   `docs/PULL_REQUEST.md`.
+- **After the plan (done):** CI in `.github/workflows/`. `verify` installs, typechecks, tests
+  and builds both workspaces on the minimum Node version. Docker and browser behaviour stay
+  manual checks; the Compose path is a scope decision, not a technical limit.

@@ -309,3 +309,27 @@ would consume review attention while proving nothing.
 **Rejected.** Stubs that look implemented. They mislead.
 
 **Cost.** The app is a catalogue, not a shop. That is the brief.
+
+---
+
+## 19. CI runs typecheck, tests and builds — nothing else
+
+**Decision.** One job on pull requests into `main` and pushes to `main`: `npm ci`, then
+typecheck, test and build as separate steps, on Node 22.12.0.
+
+**Why.** These three checks catch what review misses — a type error in an untouched file, a
+regression in a test nobody re-ran, a build that only works because of a stale `dist/`. They
+are also fast, need no secrets, and make no network calls, so a red build always means
+something in the repository is wrong. Pinning to the minimum supported Node version (rather
+than the latest) catches accidental use of an API that a contributor on the documented
+minimum does not have.
+
+**Rejected for now.** A Compose smoke job (it duplicates a one-command check already
+verified locally, roughly doubles CI time, and runner Docker differs from Docker Desktop in
+ways that produce failures unrelated to the change), Playwright end-to-end tests, a Node
+version matrix, and anything that calls Fake Store.
+
+**Cost.** CI does not prove the Docker path or the browser behaviour; both remain manual
+checks recorded in `docs/IMPLEMENTATION_STEPS.md`. If the stack later needs guarding, the
+smoke job is a small, well-understood addition — it is a scope decision, not a technical
+limitation.

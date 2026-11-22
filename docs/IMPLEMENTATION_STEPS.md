@@ -30,6 +30,8 @@
 
 Progress: **7 of 7 steps** (0–6).
 
+Beyond the plan: CI in `.github/workflows/` — see *After the plan* below.
+
 ---
 
 ## Step 0 — Scaffold ✅
@@ -526,6 +528,42 @@ Decisions:
   recorded in `DECISIONS.md`; editing the plan after the fact would hide the reasoning.
 - **Step 6 is marked done but the PR is not open.** The acceptance bullet is left as
   written so the remaining action is visible rather than quietly satisfied.
+
+---
+
+## After the plan — CI ✅
+
+### Goal
+Catch regressions before merge, with a check that is fast and deterministic.
+
+### What was added
+- `.github/workflows/ci.yml` — one `verify` job: checkout, Node 22.12.0 with the npm cache,
+  `npm ci`, then typecheck, test and build as separate steps. Triggers on pull requests into
+  `main`, pushes to `main`, and manual dispatch. Concurrency cancels superseded runs;
+  permissions are read-only.
+
+### Verification
+- The workflow YAML parses and contains one job with the expected steps.
+- `npm run typecheck`, `npm run test` (62 API + 11 web) and `npm run build` pass locally with
+  the same commands CI runs, on the same Node major.
+- The Docker path was already verified by hand in Step 5 and is unchanged by this addition.
+
+Not yet verified: the workflow has not executed on GitHub. It first runs on the next pull
+request into `main`.
+
+### Decisions
+- **Three checks only.** Typecheck, test and build are the checks that catch what review
+  misses, and they are fast, secret-free and deterministic. See `docs/DECISIONS.md`
+  decision 19.
+- **No Docker job in CI.** The Compose path is a one-command local check that was verified
+  end to end in Step 5; putting it in CI would roughly double run time and introduce
+  runner-specific Docker failures. It is a scope decision, revisitable in a few lines.
+- **No Fake Store calls, no browser tests.** A green build must never depend on a third
+  party's uptime.
+- **Node is pinned to the minimum supported version**, not the latest, so the documented
+  floor is the one actually tested.
+- **One job, no version matrix.** Only Node 22.12+ is supported, so a matrix would test
+  runtimes nobody uses.
 
 ---
 
