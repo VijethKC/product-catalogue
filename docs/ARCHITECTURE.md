@@ -89,6 +89,20 @@ asyncHandler .catch(next) ──► errorHandler
 Unmatched routes hit `notFoundHandler` → `404 NOT_FOUND`. The same envelope is
 used everywhere.
 
+### Enquiry flow
+
+```
+EnquiryForm → POST /api/enquiries
+  → enquirySchema.safeParse        invalid → 400 VALIDATION_ERROR (+ field details)
+  → enquiryService.create
+      → productRepository.getById  missing → 404 PRODUCT_NOT_FOUND
+      → emailProvider.send         throws  → 502 EMAIL_UNAVAILABLE
+  → 201 { id: "enq_<uuid>", message }
+```
+
+The service only reports success after `send` resolves. The SMTP implementation builds a
+multipart message, escapes every value in the HTML part, and strips CR/LF from the subject.
+
 ---
 
 ## 4. File map
@@ -104,6 +118,8 @@ used everywhere.
 | `AGENTS.md` | Agent working rules | Discipline for AI-assisted delivery |
 | `docs/PLAN.md` | Architecture and decisions | Reference for the challenge |
 | `docs/IMPLEMENTATION_STEPS.md` | Step-by-step log | What was done and how to verify |
+| `docker-compose.yml` | `mailpit`, `api`, `web` | One command for the reviewer path |
+| `.dockerignore` | Build-context exclusions | Small context, no secrets or build output |
 
 ### `packages/shared`
 
@@ -124,19 +140,25 @@ build overhead.
 | `src/app.ts` | `createApp()` factory: middleware, DI, routes, error handlers. No `listen()` — testable |
 | `src/config.ts` | Parses env once with Zod, fails fast, converts `FEATURED_PRODUCT_IDS` to `number[]` |
 | `src/errors.ts` | `HttpError` — status + code + optional details |
-| `src/middleware/errorHandler.ts` | 404 handler + central error mapping |
+| `src/middleware/errorHandler.ts` | 404 handler + central error mapping (including malformed JSON) |
 | `src/middleware/asyncHandler.ts` | Forwards async rejections to Express |
 | `src/repositories/productRepository.ts` | The seam: `getAll`, `getById` |
 | `src/repositories/fakeStoreAdapter.ts` | Fake Store HTTP + validation + 502 mapping |
 | `src/repositories/fixtureAdapter.ts` | In-memory repo for tests/offline |
 | `src/services/productService.ts` | Product business rules; no Express types |
+| `src/services/enquiryService.ts` | Product check, id generation, send, 502 mapping |
+| `src/email/emailProvider.ts` | `EmailProvider` seam and `EnquiryEmail` shape |
+| `src/email/smtpProvider.ts` | Nodemailer transport, message builder, HTML escaping |
 | `src/routes/products.ts` | `/`, `/featured`, `/:id` |
 | `src/routes/categories.ts` | `/`, `/:category` |
+| `src/routes/enquiries.ts` | `POST /` with shared-schema validation |
+| `Dockerfile` | Multi-stage build, production-only deps, non-root, healthcheck |
 | `tests/*` | Service unit tests, adapter tests (nock), route tests (supertest + fixtures) |
 
 **Why this layering:** routes handle HTTP, services hold rules, adapters handle I/O.
 Replacing Fake Store with a database means writing one new adapter — nothing else
-changes.
+changes. Email follows the same pattern: swapping SMTP for a transactional API means
+one new `EmailProvider`.
 
 **Why dependency injection in `createApp`:** tests inject `fixtureAdapter` and never
 touch the network. Production builds the adapter from config.
@@ -155,6 +177,8 @@ touch the network. Production builds the adapter from config.
 | `src/test/render.tsx` | Providers + MemoryRouter test helper |
 | `src/index.css` | Tailwind directives |
 | `vite.config.ts` | React plugin, port 5173, `/api` proxy, Vitest jsdom config |
+| `nginx.conf` | SPA fallback, `/api` proxy to `api:4000`, asset caching |
+| `Dockerfile` | Vite build stage + nginx runtime |
 
 The web app consumes only `/api`. It never calls Fake Store directly. The enquiry form is
 wired to `POST /api/enquiries`, which is implemented in Step 3.
@@ -197,13 +221,19 @@ tsup       → dist/index.js                    (API bundle)
 vite build → dist/index.html + dist/assets    (static web)
 ```
 
-**Production (planned, Step 5)**
+**Production (docker compose)**
 
 ```
-nginx :8080  → serves web dist, proxies /api → api:4000
-api :4000    → node dist/index.js
-mailpit      → captures enquiry emails
+Browser :8080 → nginx (web container)
+                  ├── /        → static SPA from the Vite build
+                  └── /api/*   → api:4000 (Express)
+api :4000     → node apps/api/dist/index.js
+mailpit :8025 → captures enquiry emails sent to mailpit:1025
 ```
+
+Both images build from the repository root because npm workspaces need the root lockfile.
+The API image installs production dependencies for the API workspace only; the web image
+builds the SPA and copies `dist` into nginx.
 
 ---
 
@@ -227,8 +257,10 @@ mailpit      → captures enquiry emails
 
 - **Step 4 (done):** router, API client, React Query hooks, pages and components. They
   consume the existing endpoints; the API did not change.
-- **Step 3 (next, deferred):** adds `EmailProvider` + `SmtpEmailProvider`, `enquiryService`,
-  `routes/enquiries.ts`, and `POST /api/enquiries`. `createApp` gains an `emailProvider`
-  dependency the same way it has `productRepository`. This activates the enquiry form's
-  submit path.
-- **Step 5:** Dockerfiles + nginx + compose; nginx takes over the proxy role.
+- **Step 3 (done):** `EmailProvider` + SMTP implementation, `enquiryService`,
+  `routes/enquiries.ts`, and `POST /api/enquiries`. `createApp` takes an optional
+  `emailProvider` the same way it takes `productRepository`, so tests inject a fake and
+  production builds SMTP from config. This activated the enquiry form's submit path.
+- **Step 5 (done):** Dockerfiles + nginx + compose + Mailpit. nginx takes over the proxy
+  role on port 8080, and Mailpit captures enquiry emails locally.
+- **Step 6 (next):** `README`, `DECISIONS`, `AI_USAGE`, and the pull request.

@@ -1,0 +1,15 @@
+# Keep the build context small and never bake local state into images.
+
+**/node_modules
+**/dist
+
+.git
+.gitignore
+
+.env
+.env.*
+
+docs
+**/*.md
+
+.DS_Store

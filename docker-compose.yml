@@ -1,0 +1,59 @@
+name: product-catalogue
+
+services:
+  # Captures every outgoing email locally; nothing leaves the machine.
+  mailpit:
+    image: axllent/mailpit:v1.34
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8025/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: "production"
+      PORT: "4000"
+      # Service name on the compose network, not localhost.
+      SMTP_HOST: "mailpit"
+      SMTP_PORT: "1025"
+      EMAIL_FROM: "${EMAIL_FROM:-sales@productcatalogue.local}"
+      EMAIL_TO: "${EMAIL_TO:-sales-inbox@productcatalogue.local}"
+      FAKE_STORE_BASE_URL: "${FAKE_STORE_BASE_URL:-https://fakestoreapi.com}"
+      FAKE_STORE_TIMEOUT_MS: "${FAKE_STORE_TIMEOUT_MS:-5000}"
+      FEATURED_PRODUCT_IDS: "${FEATURED_PRODUCT_IDS:-1,2,3,4,5}"
+      FEATURED_PER_CATEGORY: "${FEATURED_PER_CATEGORY:-3}"
+    ports:
+      - "${API_PORT:-4000}:4000"
+    depends_on:
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s

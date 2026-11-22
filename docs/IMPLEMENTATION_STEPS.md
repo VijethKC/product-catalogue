@@ -23,12 +23,12 @@
 | 0 | Scaffold: workspaces, shared contract, app shells, health | ✅ Done |
 | 1 | Fake Store adapter + product service + `GET /api/products` | ✅ Done |
 | 2 | Featured, categories, category split, product detail | ✅ Done |
-| 3 | Enquiry endpoint + email provider (Mailpit) | ⬜ Next |
-| 4 | Frontend pages, components, hooks, form | ✅ Done (enquiry submit needs Step 3) |
-| 5 | Docker, nginx, compose, Mailpit wiring | ⬜ Pending |
-| 6 | Docs (`README`, `DECISIONS`, `AI_USAGE`), PR | ⬜ Pending |
+| 3 | Enquiry endpoint + email provider (Mailpit) | ✅ Done |
+| 4 | Frontend pages, components, hooks, form | ✅ Done |
+| 5 | Docker, nginx, compose, Mailpit wiring | ✅ Done |
+| 6 | Docs (`README`, `DECISIONS`, `AI_USAGE`), PR | ⬜ Next |
 
-Progress: **4 of 7 steps** (0, 1, 2 and 4).
+Progress: **6 of 7 steps** (0, 1, 2, 3, 4 and 5).
 
 ---
 
@@ -258,7 +258,7 @@ detail `200`, and unknown id `404 PRODUCT_NOT_FOUND`.
 
 ---
 
-## Step 3 — Enquiry and email ⬜
+## Step 3 — Enquiry and email ✅
 
 ### Goal
 Collect an enquiry, validate it, verify the product exists, and send an email through a
@@ -302,6 +302,38 @@ apps/api/tests/email.test.ts
 - Provider failure → 502 and no success response.
 - HTML escaping covered by a unit test.
 - Mailpit shows the message during manual verification.
+
+### Implemented — results and decisions
+
+Delivered:
+- `src/email/emailProvider.ts` — `EmailProvider` seam and the `EnquiryEmail` shape.
+- `src/email/smtpProvider.ts` — Nodemailer transport, message builder, HTML escaping and
+  header sanitisation.
+- `src/services/enquiryService.ts` — product check, id generation, send, error mapping.
+- `src/routes/enquiries.ts` — `POST /api/enquiries`, shared-schema validation, `201`.
+- `createApp` accepts an injected `emailProvider`; the default is SMTP from config.
+- `express.json` parse failures now return `400 VALIDATION_ERROR` instead of `500`.
+- 18 new tests: route/service behaviour and email formatting/escaping.
+
+Verification: 62 API tests pass; typecheck and build pass. Live check against a local SMTP
+sink on `1025` produced the expected multipart message with escaped HTML, and returned
+`201`, `404`, `400` and `400` for valid, unknown-product, invalid-payload and malformed-JSON
+requests respectively.
+
+Decisions:
+- **Failure is never reported as success.** Any provider error becomes `502 EMAIL_UNAVAILABLE`
+  and the underlying error is logged; the UI already renders its retry state for this.
+- **Escape everything rendered into HTML**, including the product title. The title comes from
+  upstream rather than the user, but escaping it costs nothing and removes a whole class of
+  injection bugs.
+- **Strip CR/LF from the subject** so submitted values cannot inject headers.
+- **Trimmed values come from the shared schema**, so the email contains the same normalised
+  values the API validated.
+- **SMTP timeouts** (5s connect/greet, 10s socket) keep a dead mail server from holding the
+  HTTP request open.
+- **Mailpit is not installed yet** (Docker arrives in Step 5), so the manual acceptance check
+  used a minimal local SMTP sink. The SMTP provider code path is the same one Mailpit will
+  exercise.
 
 ---
 
@@ -379,7 +411,7 @@ Decisions:
 
 ---
 
-## Step 5 — Docker and local run ⬜
+## Step 5 — Docker and local run ✅
 
 ### Goal
 A reviewer runs the whole stack with two commands.
@@ -401,6 +433,51 @@ docker compose up --build
 - Mailpit at `http://localhost:8025`.
 - Enquiry submitted in the UI appears in Mailpit.
 - Works from a clean clone.
+
+### Implemented — results and decisions
+
+Delivered:
+- `apps/api/Dockerfile` — multi-stage build, production-only dependencies, non-root `node`
+  user, `HEALTHCHECK` on `/api/health`.
+- `apps/web/Dockerfile` — Vite build in a Node stage, served by `nginx:1.27-alpine`.
+- `apps/web/nginx.conf` — SPA fallback, `/api` proxy to `api:4000`, immutable asset caching.
+- `docker-compose.yml` — `mailpit`, `api`, `web` with healthchecks and ordered startup.
+- `.dockerignore` — keeps `node_modules`, `dist`, `.env` and docs out of the build context.
+- `.env.example` — compose host ports.
+
+Verification (Docker Desktop 29.9.3 / Compose v5.7.0):
+
+```
+docker compose up --build -d   ✅ images built, containers started
+docker compose ps              ✅ api, web, mailpit all healthy
+http://localhost:8080/         ✅ 200, SPA shell
+http://localhost:8080/products/4 ✅ 200, client-side route served by nginx
+http://localhost:8080/api/health ✅ {"status":"ok"} through the proxy
+/api/products/featured via 8080 ✅ 5 curated products
+http://localhost:8025/         ✅ Mailpit UI
+POST /api/enquiries via 8080   ✅ 201, message appears in Mailpit
+Browser form submit on :8080   ✅ thank-you state, second message in Mailpit
+```
+
+The captured message had the expected subject, plain-text and HTML parts, escaped
+`&lt;script&gt;` content, and newlines rendered as `<br>`. The API container runs as
+`uid=1000(node)`, not root. Image sizes: api 256 MB, web 76.5 MB.
+
+The build context excluded local `node_modules`, `dist` and `.env` via `.dockerignore`, so
+the images were built from repository sources only — the same inputs a clean clone provides.
+
+Decisions:
+- **Build context is the repository root** for both images, because npm workspaces need the
+  root lockfile and every workspace manifest. Compose sets `context: .` with an explicit
+  `dockerfile:`.
+- **Workspace-filtered installs** keep the API image small: `-w @catalogue/api` plus
+  `--omit=dev` avoids shipping the web app's React/Vite tree.
+- **Compose does not use `env_file`.** `.env` is used for interpolation only, so the API
+  container always gets `SMTP_HOST=mailpit` rather than the dev value `localhost`.
+- **nginx forwards `/api/…` unchanged** (`proxy_pass http://api:4000` with no path suffix),
+  so the Express routes match exactly as they do behind the Vite proxy.
+- **Mailpit is pinned** to `v1.34` for reproducible review runs.
+- **Healthchecks gate startup**: web waits for api, api waits for mailpit.
 
 ---
 
