@@ -29,12 +29,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # Pinned to the minimum supported version (engines.node >= 22.12) so CI
-      # catches any accidental use of a newer runtime feature.
+      # Pinned to the minimum supported version (engines.node) so CI catches
+      # any accidental use of a newer runtime feature. 22.12 is NOT enough:
+      # jsdom 31 pulls in undici 8, which needs zlib.createZstdDecompress.
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "22.12.0"
+          node-version: "22.22.2"
           cache: npm
 
       - name: Install

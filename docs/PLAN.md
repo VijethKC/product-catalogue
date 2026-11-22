@@ -396,7 +396,7 @@ Compose services:
 | Upstream response shape changes | Zod validation at the adapter boundary |
 | SMTP unavailable | Explicit `502` and logged failure; enquiry is not reported as sent |
 | Scope creep (rate limiting, caching, logging) | Treat as optional; ship the critical path first |
-| Node version mismatch (`engines >=22.12` vs README "Node 20+") | Align docs and engines in the docs step |
+| Node version mismatch (`engines >=22.12` vs README "Node 20+") | Resolved: final floor is `^22.22.2 \|\| >=24.15.0` (jsdom 31 / undici 8); CI exposed that 22.12 was still too low |
 | Time overrun | Cut optional infra, not tests or docs |
 
 ---

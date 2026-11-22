@@ -230,19 +230,23 @@ left as silent drift from the plan.
 
 ---
 
-## 14. Node 22.12 as the baseline
+## 14. Node 22.22.2 as the baseline
 
-**Decision.** `engines.node` is `>=22.12`, the Docker images use `node:22-alpine`, and the
-README states Node 22.12+.
+**Decision.** `engines.node` is `^22.22.2 || >=24.15.0`, CI runs 22.22.2, the Docker images
+use `node:22-alpine`, and the README states 22.22.2+ (or 24.15+).
 
-**Why.** Vite 8 requires `^20.19 || >=22.12`, and the container already pins Node 22. An
-earlier README said "Node 20+", which contradicted `engines` and could fail on 20.0–20.18.
-The stricter, tested version wins.
+**Why.** The binding constraint is not Vite (which accepts `^20.19 || >=22.12`) but the test
+toolchain: jsdom 31 declares `^22.22.2 || ^24.15.0 || >=26.0.0`, and its transitive undici 8
+calls `zlib.createZstdDecompress` at module load — an API that does not exist in Node 22.12.
+An earlier README said "Node 20+"; aligning it to 22.12 in Step 6 was still wrong, and the
+first CI run proved it. The floor is now the lowest version that actually runs the whole
+suite.
 
-**Rejected.** Widening `engines` to `>=20.19` to match Vite's floor. It would add a second
-supported runtime that nothing in CI actually exercises.
+**Rejected.** Widening `engines` to Vite's floor, or pinning jsdom to an older major just to
+keep Node 20 working. Either would trade a tested baseline for an untested one.
 
-**Cost.** Contributors on Node 20 must upgrade. That is a one-line fix with a clear error.
+**Cost.** Contributors on Node 22.12–22.21 must upgrade. npm prints a clear engine warning
+and CI runs the exact documented floor.
 
 ---
 
@@ -315,7 +319,7 @@ would consume review attention while proving nothing.
 ## 19. CI runs typecheck, tests and builds — nothing else
 
 **Decision.** One job on pull requests into `main` and pushes to `main`: `npm ci`, then
-typecheck, test and build as separate steps, on Node 22.12.0.
+typecheck, test and build as separate steps, on Node 22.22.2.
 
 **Why.** These three checks catch what review misses — a type error in an untouched file, a
 regression in a test nobody re-ran, a build that only works because of a stale `dist/`. They

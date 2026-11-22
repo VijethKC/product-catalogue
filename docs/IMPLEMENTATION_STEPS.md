@@ -508,14 +508,15 @@ Delivered:
 - `docs/DECISIONS.md` — 18 decisions, each with context, the alternative rejected, and the
   cost accepted. Covers the seams, curated featured ids, the top-3 rule, `q`, statelessness,
   Mailpit, failure-never-success, escaping, single-origin proxying, deferred caching, the
-  missing rate limiting, the MSW deviation, Node 22.12, the Docker build shape, compose
+  missing rate limiting, the MSW deviation, Node 22.22.2, the Docker build shape, compose
   interpolation, and the deliberate cuts.
 - `docs/AI_USAGE.md` — tools, prompt strategy, repository guardrails, the human review
   checklist, five real defects with how each was caught, and an honest limits section.
 - `docs/PULL_REQUEST.md` — paste-ready PR body with the acceptance-criteria → implementation
   → test table, verification output, assumptions, and out-of-scope list.
-- Node version mismatch fixed: the README now states 22.12+, matching `engines` and the
-  container image.
+- Node version mismatch fixed: the README now states 22.22.2+ (or 24.15+), matching
+  `engines` and the container image. CI later showed the original 22.12 floor was still
+  too low; see *After the plan*.
 
 Decisions:
 - **The PR body is a file, not an open PR.** Pushing and opening the PR need explicit
@@ -537,19 +538,40 @@ Decisions:
 Catch regressions before merge, with a check that is fast and deterministic.
 
 ### What was added
-- `.github/workflows/ci.yml` — one `verify` job: checkout, Node 22.12.0 with the npm cache,
+- `.github/workflows/ci.yml` — one `verify` job: checkout, Node 22.22.2 with the npm cache,
   `npm ci`, then typecheck, test and build as separate steps. Triggers on pull requests into
   `main`, pushes to `main`, and manual dispatch. Concurrency cancels superseded runs;
   permissions are read-only.
 
 ### Verification
 - The workflow YAML parses and contains one job with the expected steps.
-- `npm run typecheck`, `npm run test` (62 API + 11 web) and `npm run build` pass locally with
-  the same commands CI runs, on the same Node major.
+- `npm run typecheck`, `npm run test` (62 API + 11 web) and `npm run build` pass locally.
 - The Docker path was already verified by hand in Step 5 and is unchanged by this addition.
 
-Not yet verified: the workflow has not executed on GitHub. It first runs on the next pull
-request into `main`.
+### First run on GitHub — failure and fix
+
+Pull request #1 triggered run `45018720951`. `Checkout`, `Set up Node`, `Install` and
+`Typecheck` passed; `Test` failed and `Build` was skipped.
+
+The API suite passed all 62 tests. The web suite could not start its worker:
+
+```
+Error: [vitest-pool]: Failed to start forks worker for src/App.test.tsx
+Caused by: TypeError: Cannot read properties of undefined (reading 'bind')
+  at undici/lib/interceptor/decompress.js:78
+```
+
+`jsdom@31` pulls in `undici@8`, which calls `zlib.createZstdDecompress.bind(...)` when its
+module loads. That API does not exist in Node 22.12. Undici declares `node >=22.19.0` and
+jsdom declares `^22.22.2 || ^24.15.0 || >=26.0.0`.
+
+Reproduced locally by running Vitest with downloaded Node 22.12.0 — identical error — and
+with Node 22.22.2, where all 11 web tests pass.
+
+Fix: CI now uses Node 22.22.2, `engines.node` is `^22.22.2 || >=24.15.0`, and every
+document that named 22.12 was corrected. The Step 6 "fix" of the Node mismatch aligned the
+docs to 22.12, which was still the wrong floor; CI exposed it. Recorded in
+`docs/AI_USAGE.md` section 6.3.
 
 ### Decisions
 - **Three checks only.** Typecheck, test and build are the checks that catch what review
@@ -562,8 +584,8 @@ request into `main`.
   party's uptime.
 - **Node is pinned to the minimum supported version**, not the latest, so the documented
   floor is the one actually tested.
-- **One job, no version matrix.** Only Node 22.12+ is supported, so a matrix would test
-  runtimes nobody uses.
+- **One job, no version matrix.** Only Node 22.22.2+ and 24.15+ are supported, so a matrix
+  would test runtimes nobody uses.
 
 ---
 

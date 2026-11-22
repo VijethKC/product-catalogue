@@ -141,19 +141,38 @@ IPv4 address only, rather than trusting the error message.
 code, and a false negative here could have hidden a real bug — or sent someone chasing one
 that did not exist.
 
-### 6.3 The Node version contradicted itself
+### 6.3 The Node version contradicted itself — and the first fix was still wrong
 
 `package.json` declared `engines.node >= 22.12` and the Docker images used
 `node:22-alpine`, but the README said "Node.js 20+". A contributor on Node 20.5 would have
-followed the README and hit a Vite failure.
+followed the README and hit a failure.
 
-**Caught by:** a consistency pass during Step 6, comparing the documented requirement
-against `engines` and the Dockerfile.
+**Caught by (first time):** a consistency pass during Step 6, comparing the documented
+requirement against `engines` and the Dockerfile.
 
-**Fixed by:** the README now states 22.12+, matching what is actually tested. Recorded as
-decision 14 in `docs/DECISIONS.md`.
+**First fix:** the README was changed to 22.12+, matching `engines`. It was still wrong.
 
-**Lesson:** documentation drift is invisible to tests. It needs its own review pass.
+**Caught by (second time):** the first CI run on PR #1. `npm ci`, typecheck and all 62 API
+tests passed on Node 22.12.0, but the web suite could not start a worker:
+
+```
+Error: [vitest-pool]: Failed to start forks worker for src/App.test.tsx
+Caused by: TypeError: Cannot read properties of undefined (reading 'bind')
+  at undici/lib/interceptor/decompress.js:78
+```
+
+`jsdom@31` pulls in `undici@8`, which calls `zlib.createZstdDecompress.bind(...)` when its
+module loads. That API does not exist in Node 22.12; undici declares `node >=22.19.0` and
+jsdom declares `^22.22.2 || ^24.15.0 || >=26.0.0`.
+
+**Final fix:** CI runs 22.22.2, `engines.node` is `^22.22.2 || >=24.15.0`, and every
+document naming 22.12 was corrected. Reproduced locally on both versions — 22.12 fails
+identically, 22.22.2 passes all 11 web tests.
+
+**Lesson:** "matching what is actually tested" is only true if the thing being tested is
+the documented floor. The authoring machine ran Node 24, so the wrong minimum was invisible
+until CI ran the minimum. Two review passes were needed because the first one compared
+documents with each other instead of comparing them with the dependency tree.
 
 ### 6.4 Plan drift: MSW was planned, `vi.mock` was used
 
@@ -238,3 +257,4 @@ by reasoning about it.
 | Runtime dependencies added beyond the plan | none |
 | Unrelated files changed | none |
 | Defects caught by tests or review before commit | 5 (section 6) |
+| Defects caught by CI after push | 1 (section 6.3) |

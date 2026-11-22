@@ -144,7 +144,7 @@ Documented in full in [`docs/DECISIONS.md`](DECISIONS.md).
 6. **Mailpit captures email locally**; it does not deliver to a real inbox. Production is a
    `SMTP_*` configuration swap, not a code change.
 7. **No persistence.** The email is the record.
-8. **Node 22.12+**, matching `engines` and the container image.
+8. **Node 22.22.2+** (or 24.15+), matching `engines` and the container image.
 
 ---
 

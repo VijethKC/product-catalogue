@@ -87,7 +87,7 @@ docker compose down -v   # stop and drop captured mail
 
 ## Quick start (local dev)
 
-Requires Node.js 22.12+ and npm 10+.
+Requires Node.js 22.22.2+ (or 24.15+), matching `engines.node`, and npm 10+.
 
 ```bash
 cp .env.example .env
@@ -243,7 +243,7 @@ and on demand. One job, three checks:
 | Test | `npm run test` |
 | Build | `npm run build` |
 
-It installs with `npm ci` on Node 22.12 — the minimum supported version — with the npm
+It installs with `npm ci` on Node 22.22.2 — the minimum supported version — with the npm
 cache enabled. Separate steps mean a failure names the check that broke.
 
 The job is deterministic: no network calls to Fake Store, no secrets, no Docker build. The
